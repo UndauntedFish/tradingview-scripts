@@ -1,0 +1,39 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © bjr117
+
+//@version=5
+indicator(title = "ATR Multiplier", shorttitle = "ATRX", overlay = false)
+
+//==============================================================================
+// Input Parameters
+//==============================================================================
+atr_length      = input.int(14, title = "ATR Length", minval = 0, group = "ATR Indicator Settings")
+
+atr1_multiplier = input.float(1.5, title = "ATR Multiplier #1", minval = 0, group = "ATR Multiplier Settings")
+show_atr2       = input.bool(false, title = "Show 2nd ATR line?",           group = "ATR Multiplier Settings")
+atr2_multiplier = input.float(3,   title = "ATR Multiplier #2", minval = 0, group = "ATR Multiplier Settings")
+//==============================================================================
+
+
+//==============================================================================
+// ATR #1 and ATR #2 Calculation
+//==============================================================================
+// Calculate basic ATR value with given smoothing parameters
+atr  = ta.rma(ta.tr, atr_length)
+
+// Multiply atr by the given atr1 multiplier to get atr1
+atr1 = atr * atr1_multiplier
+
+// Multiply atr by the given atr2 multiplier to get atr2
+atr2 = atr * atr2_multiplier
+//==============================================================================
+
+
+//==============================================================================
+// Plot ATR #1 and ATR #2
+//==============================================================================
+atr1_color = show_atr2 ? color.red : color.new(#000000, 0)
+
+atr1_plot = plot(atr1,                  title = "ATR #1", color = atr1_color)
+atr2_plot = plot(show_atr2 ? atr2 : na, title = "ATR #2", color = color.green)
+//==============================================================================
