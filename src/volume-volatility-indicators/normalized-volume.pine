@@ -1,0 +1,41 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © bjr117
+
+//@version=5
+indicator(title = "Normalized Volume", shorttitle = "NVOL", overlay = false)
+
+//==============================================================================
+// User inputs
+//==============================================================================
+nvol_ma_length = input.int(title = "Normalized Volume MA Length", defval = 14)
+//==============================================================================
+
+
+//==============================================================================
+// Calculating the normalized volume
+//==============================================================================
+// Calculate cumulative volume to see if there is any volume at all in the selected instrument
+// Throw an error if there is no volume data in the selected instrument
+var cumulative_vol = 0.0
+cumulative_vol += nz(volume)
+if barstate.islast and cumulative_vol == 0
+    runtime.error("No volume is provided by the data vendor.")
+
+// Calculate a moving average of volume
+nvol_ma = ta.sma(volume, nvol_ma_length)
+
+// Calculate normalized volume
+// Normalized volume = current volume / average volume * 100
+nvol = volume / nvol_ma * 100
+//==============================================================================
+
+
+//==============================================================================
+// Plot the normalized volume
+//==============================================================================
+// Calculate the color for each of the normalized volume columns
+nvol_color = nvol > 100 ? color.green : color.red
+
+// Plot the normalized volume with the appropriate colored columns
+plot(nvol, title = "Normalized Volume", color = nvol_color, style = plot.style_columns)
+//==============================================================================
