@@ -1,0 +1,43 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © bjr117
+
+//@version=5
+indicator(title = "Fractal Dimension Index", shorttitle = "FDI", overlay = false)
+
+//==============================================================================
+// Input Parameters
+//==============================================================================
+fdi_length = input.int(30, title = "FDI Length", minval = 2)
+fdi_src    = input.source(close, title = "FDI Source")
+fdi_hline  = input.float(1.5, title = "FDI Horizontal Line Level", minval = 0.0, maxval = 2.0, step = 0.005)
+//==============================================================================
+
+
+//==============================================================================
+// Calculating FDI
+//==============================================================================
+calculate_FDI(fdi_src, fdi_length) =>
+    highest_high = ta.highest(fdi_src, fdi_length)
+    lowest_low   = ta.lowest(fdi_src,  fdi_length)
+
+    length = float(0.0)
+    for i = 1 to fdi_length - 1
+        diff = (fdi_src[i] - lowest_low) / (highest_high - lowest_low)
+        length := length + math.sqrt(math.pow(diff[i] - diff[i+1], 2) + (1 / math.pow(fdi_length, 2)))
+
+    fdi = 1 + (math.log(length) + math.log(2)) / math.log(2*fdi_length)
+    fdi
+//==============================================================================
+
+
+//==============================================================================
+// Plotting FDI and FDI Horizontal Line
+//==============================================================================
+fdi  = float(0.0)
+fdi := calculate_FDI(fdi_src, fdi_length)
+
+fdi_color = fdi > fdi_hline ? color.blue : color.red
+fdi_plot   = plot(fdi, title = "FDI Line", color = fdi_color)
+hline_plot = plot(fdi_hline, title = "FDI Horizontal Line", color = color.new(#000000, 70))
+fill(fdi_plot, hline_plot, title = "FDI Fill", color = color.new(fdi_color, 70))
+//==============================================================================
