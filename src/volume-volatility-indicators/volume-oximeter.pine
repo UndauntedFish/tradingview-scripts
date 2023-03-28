@@ -1,0 +1,76 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © bjr117
+
+//@version=5
+indicator(title = "Volume Oximeter", shorttitle = "VOXI", overlay = false)
+
+//==============================================================================
+// Inputs
+//==============================================================================
+voxi_volume_length    = input.int(259, title = "VOXI Volume Lookback Period", minval = 2)
+voxi_smoothing_length = input.int(10, title = "VOXI Smoothing Length", minval = 2)
+//==============================================================================
+
+
+//==============================================================================
+// Check if the current instrument has volume
+//==============================================================================
+// Calculate the cumulative volume for the indicator once
+var cumulative_vol  = 0.0
+cumulative_vol     += nz(volume)
+
+// If the current bar is the last bar in the time series, and cumulative volume is 0, throw an error
+if barstate.islast and cumulative_vol == 0
+    runtime.error("No volume is provided by the data vendor.")
+//==============================================================================
+
+
+//==============================================================================
+// Calculate VOXI line
+//  If the VOXI line is above zero, the current volume is greater than the historical average volume.
+//  If the VOXI line is below zero, the current volume is less than the historical average volume.
+//
+// Params:
+//  voxi_volume_length    = The amount of bars VOXI will look back to calculate the historical average volume.
+//                              The lower this is, the more responsive the historical average volume will be to new volume data.
+//                              This can lead to the historical average volume being slow to respond to new volume, resulting in a faster VOXI line, which can get you into more trends at the expense of giving more false signals due to being choppy.
+//                              The higher this is, the less responsive the historical average volume will be to new volume data.
+//                              This can lead to the historical average volume being quick to respond to new volume, resulting in a slower VOXI line, which can give you less false signals due to being less choppy at the expense of keeping you out of some trends.  
+//
+//  voxi_smoothing_length = The amount of bars VOXI will look back to calculate the smoothing for the VOXI line.
+//                              The higher this is, the less responsive the VOXI line will be to new changes in the data
+//                              This can give you less false signals, but also may keep you out of some trends.
+//                              The lower this is, the more responsive the VOXI line will be to new changes in the data.
+//                              This can get you into more trends, but also give more false signals.
+//==============================================================================
+calculate_voxi(voxi_volume_length, voxi_smoothing_length) =>
+    voxi = float(0.0)
+    
+    // If current volume is greater or equal to the average volume, add it to voxi.
+    // If current volume is less than the average volume, subtract it from voxi.
+    if volume >= ta.sma(volume, voxi_volume_length)
+        voxi := voxi + volume
+    else
+        voxi := voxi - volume
+    
+    // Return smoothed voxi
+    // Uses the Hull Moving Average method (HMA) for smoothing since it is very responsive to sudden changes, which helps catch high volume periods before a trend faster.
+    ta.hma(voxi, voxi_smoothing_length)
+//==============================================================================
+
+
+//==============================================================================
+// Plot VOXI line and zero line
+//==============================================================================
+voxi = calculate_voxi(voxi_volume_length, voxi_smoothing_length)
+
+// Plot DPG
+voxi_plot  = plot(voxi, title = "VOXI Line",  color = color.new(#000000, 0), linewidth = 2)
+
+// Plot Zero Line
+zero_plot = plot(0,   title = "Zero Line", color = color.new(#000000, 70))
+
+// Fill blue if VOXI > 0, red if VOXI < 0.
+voxi_fill_color = voxi >= 0 ? color.blue : color.red
+fill(voxi_plot, zero_plot, title = "VOXI Fill", color = color.new(voxi_fill_color, 70))
+//==============================================================================
