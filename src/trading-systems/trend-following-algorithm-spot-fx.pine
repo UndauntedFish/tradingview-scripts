@@ -8,7 +8,6 @@ strategy("Trend Following Algorithm - Dev", overlay=true, currency=currency.USD,
 // FOREX EXCHANGE - Currency Conversion 
 // Needed to calculate position sizes for non USD base currency pairs like AUD/JPY or CAD/SGD
 //==============================================================================
-
 // Select quote currency
 quoteCurrency = syminfo.currency  // gets quote currency of the current pair automatically
 
@@ -50,7 +49,6 @@ getCurrencyRate(source) =>
 
 // Put getCurrencyRate() function"s output into a variable
 currencyRateMultiplier = getCurrencyRate(ta.tr(true))
-
 //==============================================================================
 
 
@@ -73,7 +71,6 @@ endDate = timestamp(endYear, endMonth, endDay, 00, 00, 00)
 dateWindow() =>
     time >= startDate and time <= endDate ? true : false
 //==============================================================================
-
 
 
 //==============================================================================
