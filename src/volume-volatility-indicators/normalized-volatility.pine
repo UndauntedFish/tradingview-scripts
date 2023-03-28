@@ -1,0 +1,37 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © bjr117
+
+//@version=5
+indicator(title = "Normalized Volatility", shorttitle = "NVOLT", overlay = false)
+
+//==============================================================================
+// User inputs
+//==============================================================================
+nvolt_ma_length = input.int(title = "Normalized Volatility MA Length", defval = 14)
+//==============================================================================
+
+
+//==============================================================================
+// Calculating the normalized volatility
+//==============================================================================
+// Calculate the volatility in the market
+nvolt_volatility = ta.tr
+
+// Calculate a moving average of volatility
+nvolt_ma = ta.sma(nvolt_volatility, nvolt_ma_length)
+
+// Calculate normalized volatility
+// Normalized volatility = current volatility / average volatility * 100
+nvolt = nvolt_volatility / nvolt_ma * 100
+//==============================================================================
+
+
+//==============================================================================
+// Plot the normalized volatility
+//==============================================================================
+// Calculate the color for each of the normalized volatility columns
+nvolt_color = nvolt > 100 ? color.green : color.red
+
+// Plot the normalized volatility with the appropriate colored columns
+plot(nvolt, title = "Normalized Volatility", color = nvolt_color, style = plot.style_columns)
+//==============================================================================
