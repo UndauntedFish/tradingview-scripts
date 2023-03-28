@@ -1,0 +1,45 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © bjr117
+//
+//@version=5
+indicator("KusKus Starlight", shorttitle="KKS", overlay=false)
+
+
+// Inputs
+bc             = input(false, "Change Bar Color?")
+RangePeriods   = input(30,    "Range Periods")
+PriceSmoothing = input.float(0.3, "Price Smoothing", step=0.05)
+IndexSmoothing = input.float(0.3, "Index Smoothing", step=0.05)
+
+
+// Lowest low and highest high within the range period
+LowestLow   = ta.lowest(low,RangePeriods) 
+HighestHigh = ta.highest(high,RangePeriods)
+
+GreatestRange = HighestHigh-LowestLow
+MidPrice      = (high+low)/2
+
+
+// PriceLocation in current Range
+PriceLocation = (GreatestRange!=0) ? (2* ((MidPrice - LowestLow) / GreatestRange) - 1.0) : na
+
+
+// Smoothing of PriceLocation
+ExtMapBuffer4    = float(0.0)
+ExtMapBuffer4   := PriceSmoothing * nz(ExtMapBuffer4[1]) + (1.0 - PriceSmoothing) * PriceLocation
+SmoothedLocation = (ExtMapBuffer4 > 0.99) ? .99 : (ExtMapBuffer4<-0.99) ? -0.99 : ExtMapBuffer4
+
+
+// FisherIndex Calculation (by John Ehlers)
+FishIndex = (1 - SmoothedLocation != 0) ? math.log( (1+SmoothedLocation) / (1-SmoothedLocation) ) : na
+
+
+// Smoothing of FisherIndex
+ExtMapBuffer1  = float(0.0)
+ExtMapBuffer1 := IndexSmoothing * nz(ExtMapBuffer1[1]) + (1.0 - IndexSmoothing) * FishIndex 
+SmoothedFish   = ExtMapBuffer1
+
+
+// Plotting histogram and barcolors
+plot(SmoothedFish, title = "Histogram", color = (SmoothedFish > 0 ? color.green : color.red), style=plot.style_histogram, linewidth=3)
+barcolor(color = bc ? (SmoothedFish > 0 ? color.green : color.red) : na)
