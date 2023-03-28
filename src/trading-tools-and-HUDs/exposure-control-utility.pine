@@ -1,0 +1,220 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © bjr117
+
+//@version=5
+indicator(title = "NNFX Exposure Utility", shorttitle = "NNFXEXP", overlay = true)
+
+//==============================================================================
+// Exposure Settings (User Input)
+//==============================================================================
+// AUD Input Settings
+aud_is_long   = input.bool(title  = "AUD", defval = false, group = "LONG",  inline = "AUDLONG")
+aud_is_short  = input.bool(title  = "AUD", defval = false, group = "SHORT", inline = "AUDSHORT")
+aud_long_exp  = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "LONG",  inline = "AUDLONG")
+aud_short_exp = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "SHORT", inline = "AUDSHORT")
+
+// CAD Input Settings
+cad_is_long   = input.bool(title  = "CAD", defval = false, group = "LONG",  inline = "CADLONG")
+cad_is_short  = input.bool(title  = "CAD", defval = false, group = "SHORT", inline = "CADSHORT")
+cad_long_exp  = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "LONG",  inline = "CADLONG")
+cad_short_exp = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "SHORT", inline = "CADSHORT")
+
+// CHF Input Settings
+chf_is_long   = input.bool(title  = "CHF", defval = false, group = "LONG",  inline = "CHFLONG")
+chf_is_short  = input.bool(title  = "CHF", defval = false, group = "SHORT", inline = "CHFSHORT")
+chf_long_exp  = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "LONG",  inline = "CHFLONG")
+chf_short_exp = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "SHORT", inline = "CHFSHORT")
+
+// JPY Input Settings
+jpy_is_long   = input.bool(title  = "JPY", defval = false, group = "LONG",  inline = "JPYLONG")
+jpy_is_short  = input.bool(title  = "JPY", defval = false, group = "SHORT", inline = "JPYSHORT")
+jpy_long_exp  = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "LONG",  inline = "JPYLONG")
+jpy_short_exp = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "SHORT", inline = "JPYSHORT")
+
+// EUR Input Settings
+eur_is_long   = input.bool(title  = "EUR", defval = false, group = "LONG",  inline = "EURLONG")
+eur_is_short  = input.bool(title  = "EUR", defval = false, group = "SHORT", inline = "EURSHORT")
+eur_long_exp  = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "LONG",  inline = "EURLONG")
+eur_short_exp = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "SHORT", inline = "EURSHORT")
+
+// GBP Input Settings
+gbp_is_long   = input.bool(title  = "GBP", defval = false, group = "LONG",  inline = "GBPLONG")
+gbp_is_short  = input.bool(title  = "GBP", defval = false, group = "SHORT", inline = "GBPSHORT")
+gbp_long_exp  = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "LONG",  inline = "GBPLONG")
+gbp_short_exp = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "SHORT", inline = "GBPSHORT")
+
+// NZD Input Settings
+nzd_is_long   = input.bool(title  = "NZD", defval = false, group = "LONG",  inline = "NZDLONG")
+nzd_is_short  = input.bool(title  = "NZD", defval = false, group = "SHORT", inline = "NZDSHORT")
+nzd_long_exp  = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "LONG",  inline = "NZDLONG")
+nzd_short_exp = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "SHORT", inline = "NZDSHORT")
+
+// SGD Input Settings
+sgd_is_long   = input.bool(title  = "SGD", defval = false, group = "LONG",  inline = "SGDLONG")
+sgd_is_short  = input.bool(title  = "SGD", defval = false, group = "SHORT", inline = "SGDSHORT")
+sgd_long_exp  = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "LONG",  inline = "SGDLONG")
+sgd_short_exp = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "SHORT", inline = "SGDSHORT")
+
+// USD Input Settings
+usd_is_long   = input.bool(title  = "USD", defval = false, group = "LONG",  inline = "USDLONG")
+usd_is_short  = input.bool(title  = "USD", defval = false, group = "SHORT", inline = "USDSHORT")
+usd_long_exp  = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "LONG",  inline = "USDLONG")
+usd_short_exp = input.float(title = "| Exposure (%)", defval = 2.0, minval = 0, step = 0.005, group = "SHORT", inline = "USDSHORT")
+
+
+//==============================================================================
+// Table Settings (User Input)
+//==============================================================================
+// These options control where the table appears on the chart
+table_y_pos = input.string(title = "GUI position", defval = "top",   options = ["top", "middle", "bottom"], group = "GUI Settings", inline = "GUI Pos")
+table_x_pos = input.string(title = "",             defval = "right", options = ["left", "center", "right"], group = "GUI Settings", inline = "GUI Pos")
+
+// Table colors
+text_color       = input.color(title = "Text", defval = color.new(color.black, 0), group = "GUI Settings", inline = "GUI Colors")
+long_exp_color   = input.color(title = "Long", defval = color.new(color.green, 30), group = "GUI Settings", inline = "GUI Colors")
+short_exp_color  = input.color(title = "Short", defval = color.new(color.red,   30), group = "GUI Settings", inline = "GUI Colors")
+background_color = input.color(title = "Background", defval = color.new(color.gray,  100), group = "GUI Settings", inline = "GUI Colors")
+//==============================================================================
+
+
+//==============================================================================
+// Helper Function: Calculate the total exposure given the current exposure inputs
+//==============================================================================
+get_total_exposure() =>
+    // Set initial total exposure to 0%
+    var float total_exposure = 0.0
+    
+    // Iterate through the user inputs and see if there is >0% exposure on any currency
+    // Add that to exposure
+    if aud_is_long
+        total_exposure += aud_long_exp
+    if aud_is_short
+        total_exposure += aud_short_exp
+    if cad_is_long
+        total_exposure += cad_long_exp
+    if cad_is_short
+        total_exposure += cad_short_exp
+    if chf_is_long
+        total_exposure += chf_long_exp
+    if chf_is_short
+        total_exposure += chf_short_exp
+    if jpy_is_long
+        total_exposure += jpy_long_exp
+    if jpy_is_short
+        total_exposure += jpy_short_exp
+    if eur_is_long
+        total_exposure += eur_long_exp
+    if eur_is_short
+        total_exposure += eur_short_exp
+    if gbp_is_long
+        total_exposure += gbp_long_exp
+    if gbp_is_short
+        total_exposure += gbp_short_exp
+    if nzd_is_long
+        total_exposure += nzd_long_exp
+    if nzd_is_short
+        total_exposure += nzd_short_exp
+    if sgd_is_long
+        total_exposure += sgd_long_exp
+    if sgd_is_short
+        total_exposure += sgd_short_exp
+    if usd_is_long
+        total_exposure += usd_long_exp
+    if usd_is_short
+        total_exposure += usd_short_exp
+        
+    // Return total exposure    
+    total_exposure / 2.0
+//==============================================================================
+
+
+//==============================================================================
+// Create table
+//==============================================================================
+// Creates the table
+var table exp_table = table.new(table_y_pos + "_" + table_x_pos, 3, 12)
+
+// Lists the contents of the Pair column
+var string[] pairs_traded = array.from("AUD", "CAD", "CHF", "JPY", "EUR", "GBP", "NZD", "SGD", "USD")
+
+// Populates table
+if barstate.islast
+
+    // Populate table header
+    table.cell(exp_table, 0, 0, "Currency", bgcolor = background_color, text_color = text_color, text_size = size.small)
+    table.cell(exp_table, 1, 0, "Long %",   bgcolor = background_color, text_color = text_color, text_size = size.small)
+    table.cell(exp_table, 2, 0, "Short %",  bgcolor = background_color, text_color = text_color, text_size = size.small)
+    
+    // Populate the Currency column with pairs_traded, and the Long %, Short % columns with 0%
+    for row_index = 1 to array.size(pairs_traded)
+        table.cell(exp_table, 0, row_index, array.get(pairs_traded, row_index - 1), bgcolor = background_color, text_color = text_color, text_size = size.tiny)
+        table.cell(exp_table, 1, row_index, "0%",                                   bgcolor = background_color, text_color = text_color, text_size = size.tiny)
+        table.cell(exp_table, 2, row_index, "0%",                                   bgcolor = background_color, text_color = text_color, text_size = size.tiny)
+        
+    // Populate the Long %, Short % columns with any exposure values > 0%
+    for row_index = 1 to array.size(pairs_traded) - 1
+        // Iterate through the Currency row
+        current_pair = array.get(pairs_traded, row_index - 1)
+        
+        // Set the current pair's exposure on the Long % and Short % cells
+        if current_pair == "AUD"
+            // Check to see if there is any >0% exposure
+            if aud_is_long
+                table.cell(exp_table, 1, row_index, str.tostring(aud_long_exp) + "%",  bgcolor = long_exp_color,  text_color = text_color, text_size = size.tiny)
+            if aud_is_short
+                table.cell(exp_table, 2, row_index, str.tostring(aud_short_exp) + "%", bgcolor = short_exp_color, text_color = text_color, text_size = size.tiny)
+        else if current_pair == "CAD"
+            // Check to see if there is any >0% exposure
+            if cad_is_long
+                table.cell(exp_table, 1, row_index, str.tostring(cad_long_exp) + "%",  bgcolor = long_exp_color,  text_color = text_color, text_size = size.tiny)
+            if cad_is_short
+                table.cell(exp_table, 2, row_index, str.tostring(cad_short_exp) + "%", bgcolor = short_exp_color, text_color = text_color, text_size = size.tiny)
+        else if current_pair == "CHF"
+            // Check to see if there is any >0% exposure
+            if chf_is_long
+                table.cell(exp_table, 1, row_index, str.tostring(chf_long_exp) + "%",  bgcolor = long_exp_color,  text_color = text_color, text_size = size.tiny)
+            if chf_is_short
+                table.cell(exp_table, 2, row_index, str.tostring(chf_short_exp) + "%", bgcolor = short_exp_color, text_color = text_color, text_size = size.tiny)
+        else if current_pair == "JPY"
+            // Check to see if there is any >0% exposure
+            if jpy_is_long
+                table.cell(exp_table, 1, row_index, str.tostring(jpy_long_exp) + "%",  bgcolor = long_exp_color,  text_color = text_color, text_size = size.tiny)
+            if jpy_is_short
+                table.cell(exp_table, 2, row_index, str.tostring(jpy_short_exp) + "%", bgcolor = short_exp_color, text_color = text_color, text_size = size.tiny)
+        else if current_pair == "EUR"
+            // Check to see if there is any >0% exposure
+            if eur_is_long
+                table.cell(exp_table, 1, row_index, str.tostring(eur_long_exp) + "%",  bgcolor = long_exp_color,  text_color = text_color, text_size = size.tiny)
+            if eur_is_short
+                table.cell(exp_table, 2, row_index, str.tostring(eur_short_exp) + "%", bgcolor = short_exp_color, text_color = text_color, text_size = size.tiny)
+        else if current_pair == "GBP"
+            // Check to see if there is any >0% exposure
+            if gbp_is_long
+                table.cell(exp_table, 1, row_index, str.tostring(gbp_long_exp) + "%",  bgcolor = long_exp_color,  text_color = text_color, text_size = size.tiny)
+            if gbp_is_short
+                table.cell(exp_table, 2, row_index, str.tostring(gbp_short_exp) + "%", bgcolor = short_exp_color, text_color = text_color, text_size = size.tiny)
+        else if current_pair == "NZD"
+            // Check to see if there is any >0% exposure
+            if nzd_is_long
+                table.cell(exp_table, 1, row_index, str.tostring(nzd_long_exp) + "%",  bgcolor = long_exp_color,  text_color = text_color, text_size = size.tiny)
+            if nzd_is_short
+                table.cell(exp_table, 2, row_index, str.tostring(nzd_short_exp) + "%", bgcolor = short_exp_color, text_color = text_color, text_size = size.tiny)
+        else if current_pair == "SGD"
+            // Check to see if there is any >0% exposure
+            if sgd_is_long
+                table.cell(exp_table, 1, row_index, str.tostring(sgd_long_exp) + "%",  bgcolor = long_exp_color,  text_color = text_color, text_size = size.tiny)
+            if sgd_is_short
+                table.cell(exp_table, 2, row_index, str.tostring(sgd_short_exp) + "%", bgcolor = short_exp_color, text_color = text_color, text_size = size.tiny)
+        else if current_pair == "USD"
+            // Check to see if there is any >0% exposure
+            if usd_is_long
+                table.cell(exp_table, 1, row_index, str.tostring(usd_long_exp) + "%",  bgcolor = long_exp_color,  text_color = text_color, text_size = size.tiny)
+            if usd_is_short
+                table.cell(exp_table, 2, row_index, str.tostring(usd_short_exp) + "%", bgcolor = short_exp_color, text_color = text_color, text_size = size.tiny)
+    
+    // Merge the columns in the last row of the table to make the Total Exposure row take up the space of all 3 columns
+    //table.merge_cells(exp_table, 0, array.size(pairs_traded) + 1, 2, array.size(pairs_traded) + 1)
+    
+    // Populate the Total Exposure % row
+    //table.cell(exp_table, 1, array.size(pairs_traded) + 1, "Total Exposure: " + str.tostring(get_total_exposure()) + "%", bgcolor = background_color, text_color = text_color, text_size = size.small, text_halign = text.align_center)
+//==============================================================================
