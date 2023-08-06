@@ -1,0 +1,95 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © bjr117
+
+//@version=5
+indicator(title = "ATR Bands", overlay = true, timeframe = "", timeframe_gaps = true)
+
+//==============================================================================
+// Inputs
+//==============================================================================
+use_aatr = input.bool(title = "Use Adaptive ATR?", defval = false, group = "Adaptive ATR Settings")
+aatr_length = input.int(title = "Adaptive ATR Calculation Lookback Period", defval = 14, minval = 1, group = "Adaptive ATR Settings")
+aatr_src = input.source(title = "Adaptive ATR Calculation Source", defval = hl2, group = "Adaptive ATR Settings")
+
+atrb1_length = input.int(title = "ATR Calculation Lookback Period", defval = 14, minval = 1, group = "Band #1 Settings")
+atrb1_multiple = input.float(title = "ATR Band Multiplier", defval = 3.0, minval = 0, step = 0.5, group = "Band #1 Settings")
+atrb1_upper_src = input.source(title = "Price to Plot Upper Band From", defval = close, group = "Band #1 Settings")
+atrb1_lower_src = input.source(title = "Price to Plot Lower Band From", defval = close, group = "Band #1 Settings")
+
+
+show_atrb2 = input.bool(title = "Show Second Band?", defval = false, group = "Band #2 Settings")
+atrb2_length = input.int(title = "ATR Calculation Lookback Period", defval = 14, minval = 1, group = "Band #2 Settings")
+atrb2_multiple = input.float(title = "ATR Band Multiplier", defval = 6.0, minval = 0, step = 0.5, group = "Band #2 Settings")
+atrb2_upper_src = input.source(title = "Price to Plot Upper Band From", defval = close, group = "Band #2 Settings")
+atrb2_lower_src = input.source(title = "Price to Plot Lower Band From", defval = close, group = "Band #2 Settings")
+//==============================================================================
+
+
+//==============================================================================
+// Helper Function: Calculate ATR Band
+//==============================================================================
+get_atr_bands(atr_length, atr_multiple, upper_src, lower_src) =>
+    band_width = (ta.atr(atr_length) * atr_multiple)
+    upper_band = upper_src + band_width
+    lower_band = lower_src - band_width
+    
+    [upper_band, lower_band]
+//==============================================================================
+
+
+//==============================================================================
+// Helper Function: Calculate Adaptive ATR (credits to Loxx)
+//==============================================================================
+calc_adaptive_atr(aatr_length, aatr_src) =>
+    mper = (aatr_length > 1) ? aatr_length : 1
+    mfast = math.max(mper / 2.0, 1)
+    mslow = mper * 5
+    mperDiff = mslow - mfast
+            
+    noise = 0., aatr = 0.
+
+    diff = math.abs(aatr_src - nz(aatr_src[1]))
+    signal = math.abs(aatr_src - nz(aatr_src[mper]))
+    noise := nz(noise[1]) + diff - nz(diff[mper])
+    avgper = (noise != 0) ? (signal / noise) * mperDiff + mfast : mper
+    aatr := nz(aatr[1]) + (2.0 / (1.0 + avgper)) * ((high - low) - nz(aatr[1]))
+
+    aatr
+//==============================================================================
+
+
+//==============================================================================
+// Helper Function: Calculate Adaptive ATR Band
+//==============================================================================
+get_adaptive_atr_bands(aatr_length, aatr_src, atr_multiple, upper_src, lower_src) =>
+    band_width = (calc_adaptive_atr(aatr_length, aatr_src) * atr_multiple)
+    upper_band = upper_src + band_width
+    lower_band = lower_src - band_width
+    
+    [upper_band, lower_band]
+//==============================================================================
+
+
+
+//==============================================================================
+// Calculate ATR bands
+//==============================================================================
+[atrb1_upper, atrb1_lower] = get_atr_bands(atrb1_length, atrb1_multiple, atrb1_upper_src, atrb1_lower_src)
+[atrb2_upper, atrb2_lower] = get_atr_bands(atrb2_length, atrb2_multiple, atrb2_upper_src, atrb2_lower_src)
+
+[aatrb1_upper, aatrb1_lower] = get_adaptive_atr_bands(aatr_length, aatr_src, atrb1_multiple, atrb1_upper_src, atrb1_lower_src)
+[aatrb2_upper, aatrb2_lower] = get_adaptive_atr_bands(aatr_length, aatr_src, atrb2_multiple, atrb2_upper_src, atrb2_lower_src)
+//==============================================================================
+
+
+//==============================================================================
+// Plot ATR bands
+//==============================================================================
+// Plot band 1
+plot(use_aatr ? aatrb1_upper : atrb1_upper, title = "ATR Band 1: Upper", color = color.new(#ac1919, 15), style = plot.style_stepline)
+plot(use_aatr ? aatrb1_lower : atrb1_lower, title = "ATR Band 1: Lower", color = color.new(#ac1919, 15), style = plot.style_stepline)
+
+// Plot band 2
+plot(show_atrb2 ? (use_aatr ? aatrb2_upper : atrb2_upper) : na, title = "ATR Band 2: Upper", color = color.new(color.green, 15), style = plot.style_stepline)
+plot(show_atrb2 ? (use_aatr ? aatrb2_lower : atrb2_lower) : na, title = "ATR Band 2: Lower", color = color.new(color.green, 15), style = plot.style_stepline)
+//==============================================================================
